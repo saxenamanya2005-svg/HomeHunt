@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HomeHunt - Owner Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body style="background:#f5f6fa">
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="index.html"><span>Home</span>Hunt</a>
+    <div class="d-flex align-items-center gap-2">
+      <span class="nav-link" id="ownerName"></span>
+      <button class="btn-view" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+
+  <!-- Page title + Add button -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 style="font-weight:700; margin:0">My Listings</h4>
+    <button class="btn-view" onclick="showForm()">+ Add New PG</button>
+  </div>
+
+  <!-- Stats row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-box">
+        <div class="num" id="statTotal">0</div>
+        <div class="label">Total Listings</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-box">
+        <div class="num" id="statAvg">₹0</div>
+        <div class="label">Avg Rent</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD PG FORM (hidden by default) -->
+  <div id="addForm" class="hidden" style="background:white; border-radius:14px; padding:28px; margin-bottom:24px; box-shadow:0 2px 10px rgba(0,0,0,0.07)">
+
+    <h5 style="font-weight:700; margin-bottom:20px">Add a New PG</h5>
+
+    <div class="alert-box alert-success hidden" id="formSuccess">✅ PG added successfully!</div>
+    <div class="alert-box alert-error hidden" id="formError">❌ Something went wrong. Try again.</div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label style="font-size:13px; font-weight:600">PG Name *</label>
+        <input type="text" id="fName" class="form-control mt-1" placeholder="e.g. Sunshine PG">
+      </div>
+      <div class="col-md-6">
+        <label style="font-size:13px; font-weight:600">City *</label>
+        <input type="text" id="fCity" class="form-control mt-1" placeholder="e.g. Dehradun">
+      </div>
+      <div class="col-md-6">
+        <label style="font-size:13px; font-weight:600">Monthly Rent (₹) *</label>
+        <input type="number" id="fRent" class="form-control mt-1" placeholder="e.g. 6000">
+      </div>
+      <div class="col-md-6">
+        <label style="font-size:13px; font-weight:600">Type</label>
+        <select id="fType" class="form-select mt-1">
+          <option value="Boys">Boys</option>
+          <option value="Girls">Girls</option>
+          <option value="Co-ed">Co-ed</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label style="font-size:13px; font-weight:600">Phone Number *</label>
+        <input type="tel" id="fPhone" class="form-control mt-1" placeholder="10-digit number">
+      </div>
+      <div class="col-md-6">
+        <label style="font-size:13px; font-weight:600">Facilities</label>
+        <input type="text" id="fFacilities" class="form-control mt-1" placeholder="WiFi, Meals, Parking">
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+      <button class="btn-view" id="saveBtn" onclick="savePG()">Save Listing</button>
+      <button class="btn-view" style="background:#e2e8f0; color:#0f172a" onclick="hideForm()">Cancel</button>
+    </div>
+
+  </div>
+
+  <!-- LIST OF OWNER'S PGS -->
+  <div id="listingsArea"></div>
+
+  <!-- Empty state -->
+  <div id="emptyMsg" class="hidden" style="text-align:center; padding:60px 0; color:#94a3b8">
+    <div style="font-size:48px; margin-bottom:12px">🏠</div>
+    <h5>No listings yet</h5>
+    <p style="font-size:14px">Click "Add New PG" to post your first listing!</p>
+  </div>
+
+</div>
+
+<footer>&copy; 2026 HomeHunt</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+
+  import { getUser, logout } from "./auth.js";
+  import { db, collection, addDoc, getDocs, deleteDoc, doc, query, where } from "./firebase.js";
+
+  // --- AUTH GUARD: redirect if not an owner ---
+  var user = getUser();
+  if (!user || user.role !== "owner") {
+    window.location.href = "login.html";
+  }
+
+  // Show owner name in navbar
+  document.getElementById("ownerName").textContent = "👤 " + user.name;
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+
+
+  // --- SHOW / HIDE FORM ---
+  window.showForm = function() {
+    document.getElementById("addForm").classList.remove("hidden");
+  };
+
+  window.hideForm = function() {
+    document.getElementById("addForm").classList.add("hidden");
+    document.getElementById("fName").value = "";
+    document.getElementById("fCity").value = "";
+    document.getElementById("fRent").value = "";
+    document.getElementById("fPhone").value = "";
+    document.getElementById("fFacilities").value = "";
+    document.getElementById("formSuccess").classList.add("hidden");
+    document.getElementById("formError").classList.add("hidden");
+  };
+
+
+  // --- SAVE A NEW PG TO FIRESTORE ---
+  window.savePG = async function() {
+    var name       = document.getElementById("fName").value.trim();
+    var city       = document.getElementById("fCity").value.trim();
+    var rent       = parseInt(document.getElementById("fRent").value);
+    var type       = document.getElementById("fType").value;
+    var phone      = document.getElementById("fPhone").value.trim();
+    var facilities = document.getElementById("fFacilities").value.trim();
+
+    // Check required fields
+    if (!name || !city || !rent || !phone) {
+      alert("Please fill in all required fields!");
+      return;
+    }
+
+    // Check phone number: must be exactly 10 digits
+    if (phone.length !== 10 || isNaN(phone)) {
+      alert("Please enter a valid 10-digit phone number!");
+      return;
+    }
+
+    if (!facilities) facilities = "Basic Amenities";
+
+    // Show loading
+    var btn = document.getElementById("saveBtn");
+    btn.textContent = "Saving...";
+    btn.disabled = true;
+
+    try {
+      // Save to Firestore "listings" collection
+      // addDoc gives it a unique ID automatically
+      await addDoc(collection(db, "listings"), {
+        name:       name,
+        city:       city,
+        rent:       rent,
+        type:       type,
+        phone:      phone,
+        facilities: facilities,
+        owner:      user.name,
+        ownerEmail: user.email   // so we can filter by owner later
+      });
+
+      document.getElementById("formSuccess").classList.remove("hidden");
+      document.getElementById("formError").classList.add("hidden");
+
+      // After 1.5 seconds: hide form and reload listings
+      setTimeout(function() {
+        hideForm();
+        loadListings();
+      }, 1500);
+
+    } catch (err) {
+      document.getElementById("formError").classList.remove("hidden");
+      console.error(err);
+    }
+
+    btn.textContent = "Save Listing";
+    btn.disabled = false;
+  };
+
+
+  // --- LOAD THIS OWNER'S LISTINGS FROM FIRESTORE ---
+  async function loadListings() {
+    var area     = document.getElementById("listingsArea");
+    var emptyMsg = document.getElementById("emptyMsg");
+
+    area.innerHTML = '<p style="color:#94a3b8; font-size:14px">Loading your listings...</p>';
+
+    try {
+      // Get only listings that belong to this owner (by their email)
+      var q = query(
+        collection(db, "listings"),
+        where("ownerEmail", "==", user.email)
+      );
+      var snapshot = await getDocs(q);
+
+      var listings = [];
+      snapshot.forEach(function(d) { listings.push({ id: d.id, ...d.data() }); });
+
+      if (listings.length == 0) {
+        area.innerHTML = "";
+        emptyMsg.classList.remove("hidden");
+      } else {
+        emptyMsg.classList.add("hidden");
+        area.innerHTML = "";
+
+        for (var i = 0; i < listings.length; i++) {
+          var pg = listings[i];
+          area.innerHTML +=
+            '<div class="listing-item">' +
+              '<div>' +
+                '<h6>' + pg.name + '</h6>' +
+                '<p>📍 ' + pg.city + ' &nbsp;·&nbsp; ₹' + Number(pg.rent).toLocaleString() + '/mo &nbsp;·&nbsp; ' + pg.type + '</p>' +
+              '</div>' +
+              '<div class="d-flex gap-2">' +
+                '<a href="details.html?id=' + pg.id + '" class="btn-view" style="font-size:12px; padding:7px 14px">View</a>' +
+                '<button onclick="deletePG(\'' + pg.id + '\')" class="btn-view" style="background:#fee2e2; color:#991b1b; font-size:12px; padding:7px 14px; border:none">Delete</button>' +
+              '</div>' +
+            '</div>';
+        }
+      }
+
+      // Update stats
+      document.getElementById("statTotal").textContent = listings.length;
+      if (listings.length > 0) {
+        var total = 0;
+        for (var j = 0; j < listings.length; j++) total += listings[j].rent;
+        document.getElementById("statAvg").textContent = "₹" + Math.round(total / listings.length).toLocaleString();
+      }
+
+    } catch (err) {
+      area.innerHTML = '<p style="color:#ef4444">Could not load listings. Check your internet connection.</p>';
+      console.error(err);
+    }
+  }
+
+
+  // --- DELETE A LISTING FROM FIRESTORE ---
+  window.deletePG = async function(id) {
+    if (!confirm("Delete this listing? This cannot be undone.")) return;
+
+    try {
+      // Delete the document with this id from "listings" collection
+      await deleteDoc(doc(db, "listings", id));
+      loadListings(); // refresh
+    } catch (err) {
+      alert("Could not delete. Try again.");
+      console.error(err);
+    }
+  };
+
+
+  // Load on page open
+  loadListings();
+
+</script>
+</body>
+</html>

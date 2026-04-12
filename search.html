@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HomeHunt - Search PGs</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="index.html"><span>Home</span>Hunt</a>
+    <div id="navLinks" class="d-flex align-items-center gap-2"></div>
+  </div>
+</nav>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <div class="container">
+    <div class="row g-2">
+      <div class="col-md-5">
+        <input type="text" id="cityInput" placeholder="🔍  Search by city (e.g. Dehradun)">
+      </div>
+      <div class="col-md-3">
+        <select id="priceFilter">
+          <option value="0">Any Price</option>
+          <option value="4000">Up to ₹4,000</option>
+          <option value="6000">Up to ₹6,000</option>
+          <option value="9000">Up to ₹9,000</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select id="typeFilter">
+          <option value="">All Types</option>
+          <option value="Boys">Boys</option>
+          <option value="Girls">Girls</option>
+          <option value="Co-ed">Co-ed</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn-view w-100" onclick="runSearch()" style="padding:10px">Search</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS AREA -->
+<div class="container py-4">
+
+  <!-- Login banner — only shown when NOT logged in -->
+  <div class="login-banner hidden" id="loginBanner">
+    <div>
+      <b>🔒 Login to see owner phone numbers</b><br>
+      <small style="color:#94a3b8">Contact details are hidden until you log in — it's free!</small>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="login.html" class="btn-view">Login</a>
+      <a href="register.html" class="btn-view" style="background:#e2e8f0; color:#0f172a">Register</a>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <p id="loadingMsg" style="color:#94a3b8; font-size:14px">Loading PGs...</p>
+
+  <!-- Result count text -->
+  <p id="resultText" style="color:#94a3b8; font-size:14px; margin-bottom:16px; display:none"></p>
+
+  <!-- Cards go here -->
+  <div class="row" id="resultsArea"></div>
+
+  <!-- Empty state -->
+  <div class="hidden" id="emptyMsg" style="text-align:center; padding:60px 0">
+    <div style="font-size:48px; margin-bottom:12px">🏚️</div>
+    <h5 style="color:#94a3b8">No PGs found</h5>
+    <p style="color:#94a3b8; font-size:14px">Try a different city or remove filters.</p>
+    <button class="btn-view" onclick="clearSearch()">Show All PGs</button>
+  </div>
+
+</div>
+
+<footer>&copy; 2026 HomeHunt</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+
+  import { getUser, logout } from "./auth.js";
+  import { db, collection, getDocs } from "./firebase.js";
+
+  // --- NAVBAR ---
+  var user = getUser();
+  if (user) {
+    var dest = user.role == "owner" ? "owner.html" : "search.html";
+    document.getElementById("navLinks").innerHTML =
+      '<a href="' + dest + '" class="nav-link">' + user.name + '</a>' +
+      '<button class="btn-view" id="logoutBtn">Logout</button>';
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+  } else {
+    document.getElementById("navLinks").innerHTML =
+      '<a href="login.html" class="nav-link">Login</a>' +
+      '<a href="register.html" class="btn-view">Register Free</a>';
+    document.getElementById("loginBanner").classList.remove("hidden");
+  }
+
+  // Store all PGs loaded from Firestore
+  var allPGs = [];
+
+  // --- LOAD ALL PGS FROM FIRESTORE ONCE ---
+  async function loadAllPGs() {
+    try {
+      var snapshot = await getDocs(collection(db, "listings"));
+      allPGs = [];
+      snapshot.forEach(function(d) { allPGs.push({ id: d.id, ...d.data() }); });
+
+      document.getElementById("loadingMsg").style.display = "none";
+      document.getElementById("resultText").style.display = "block";
+
+      // Check if URL has ?city= from homepage search
+      var params = new URLSearchParams(window.location.search);
+      var cityFromHome = params.get("city");
+      if (cityFromHome) {
+        document.getElementById("cityInput").value = cityFromHome;
+      }
+
+      runSearch(); // show results right away
+
+    } catch (err) {
+      document.getElementById("loadingMsg").textContent = "Could not load PGs. Check your internet connection.";
+      console.error(err);
+    }
+  }
+
+  // --- SEARCH / FILTER ---
+  window.runSearch = function() {
+    var city     = document.getElementById("cityInput").value.trim().toLowerCase();
+    var maxPrice = parseInt(document.getElementById("priceFilter").value);
+    var typeWant = document.getElementById("typeFilter").value;
+
+    var results = allPGs;
+
+    if (city != "") {
+      results = results.filter(function(pg) {
+        return pg.city.toLowerCase().includes(city);
+      });
+    }
+    if (maxPrice > 0) {
+      results = results.filter(function(pg) {
+        return pg.rent <= maxPrice;
+      });
+    }
+    if (typeWant != "") {
+      results = results.filter(function(pg) {
+        return pg.type == typeWant;
+      });
+    }
+
+    showResults(results);
+  };
+
+  // --- SHOW RESULTS ---
+  function showResults(results) {
+    var area      = document.getElementById("resultsArea");
+    var emptyMsg  = document.getElementById("emptyMsg");
+    var countText = document.getElementById("resultText");
+
+    if (results.length == 0) {
+      area.innerHTML = "";
+      emptyMsg.classList.remove("hidden");
+      countText.textContent = "";
+    } else {
+      emptyMsg.classList.add("hidden");
+      countText.textContent = results.length + " PG(s) found";
+      area.innerHTML = "";
+
+      for (var i = 0; i < results.length; i++) {
+        var pg = results[i];
+        var typeClass = "type-coed";
+        if (pg.type == "Boys")  typeClass = "type-boys";
+        if (pg.type == "Girls") typeClass = "type-girls";
+        var imgSeed = pg.id.charCodeAt(0) + pg.id.charCodeAt(1);
+
+        area.innerHTML +=
+          '<div class="col-md-4">' +
+            '<div class="pg-card">' +
+              '<img src="https://picsum.photos/seed/' + imgSeed + '/400/200" alt="' + pg.name + '">' +
+              '<div class="pg-card-body">' +
+                '<span class="pg-card-type ' + typeClass + '">' + pg.type + '</span>' +
+                '<h5>' + pg.name + '</h5>' +
+                '<p class="pg-card-city"><i class="bi bi-geo-alt-fill" style="color:#f59e0b"></i> ' + pg.city + '</p>' +
+                '<p style="font-size:12px; color:#94a3b8; margin-bottom:12px"><i class="bi bi-check-circle" style="color:#f59e0b"></i> ' + pg.facilities + '</p>' +
+                '<div class="d-flex justify-content-between align-items-center">' +
+                  '<div class="pg-card-price">₹' + Number(pg.rent).toLocaleString() + ' <span>/month</span></div>' +
+                  '<a href="details.html?id=' + pg.id + '" class="btn-view">View</a>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      }
+    }
+  }
+
+  // --- CLEAR FILTERS ---
+  window.clearSearch = function() {
+    document.getElementById("cityInput").value = "";
+    document.getElementById("priceFilter").value = "0";
+    document.getElementById("typeFilter").value = "";
+    window.runSearch();
+  };
+
+  loadAllPGs();
+
+</script>
+</body>
+</html>

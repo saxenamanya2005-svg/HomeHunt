@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HomeHunt - Register</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+
+  <div class="auth-box">
+
+    <div style="text-align:center; margin-bottom:24px">
+      <div style="font-size:36px">🏠</div>
+      <h2>Create Account</h2>
+      <p>Join HomeHunt for free</p>
+    </div>
+
+    <!-- Success message (hidden at first) -->
+    <div class="alert-box alert-success hidden" id="successMsg">
+      ✅ Account created! Taking you to login...
+    </div>
+
+    <!-- Error message (hidden at first) -->
+    <div class="alert-box alert-error hidden" id="errorMsg">
+      ❌ This email is already registered!
+    </div>
+
+    <!-- NAME -->
+    <div class="input-row">
+      <i class="bi bi-person"></i>
+      <input type="text" id="name" placeholder="Your full name">
+    </div>
+
+    <!-- EMAIL -->
+    <div class="input-row">
+      <i class="bi bi-envelope"></i>
+      <input type="email" id="email" placeholder="your@email.com">
+    </div>
+
+    <!-- PASSWORD -->
+    <div class="input-row">
+      <i class="bi bi-lock"></i>
+      <input type="password" id="password" placeholder="Choose a password">
+    </div>
+
+    <!-- ROLE selector -->
+    <p style="font-size:13px; font-weight:600; margin-bottom:8px">I am a...</p>
+    <div class="role-row">
+      <div class="role-card selected" id="cardTenant" onclick="selectRole('user')">
+        <i class="bi bi-person-fill"></i>
+        <b>Tenant</b>
+        <small>Looking for PG</small>
+      </div>
+      <div class="role-card" id="cardOwner" onclick="selectRole('owner')">
+        <i class="bi bi-building"></i>
+        <b>Owner</b>
+        <small>List my PG</small>
+      </div>
+    </div>
+
+    <input type="hidden" id="selectedRole" value="user">
+
+    <button class="btn-submit" id="registerBtn" onclick="submitRegister()">
+      Register
+    </button>
+
+    <p style="text-align:center; margin-top:16px; font-size:13px; color:#94a3b8">
+      Already have an account? <a href="login.html" style="color:#d97706; font-weight:600">Login</a>
+    </p>
+    <p style="text-align:center; font-size:13px">
+      <a href="index.html" style="color:#94a3b8">← Back to Home</a>
+    </p>
+
+  </div>
+
+  <script type="module">
+    import { register } from "./auth.js";
+
+    window.selectRole = function(role) {
+      document.getElementById("cardTenant").classList.remove("selected");
+      document.getElementById("cardOwner").classList.remove("selected");
+      if (role == "user") {
+        document.getElementById("cardTenant").classList.add("selected");
+      } else {
+        document.getElementById("cardOwner").classList.add("selected");
+      }
+      document.getElementById("selectedRole").value = role;
+    };
+
+    window.submitRegister = async function() {
+      var name     = document.getElementById("name").value.trim();
+      var email    = document.getElementById("email").value.trim();
+      var password = document.getElementById("password").value;
+      var role     = document.getElementById("selectedRole").value;
+
+      if (!name || !email || !password) {
+        alert("Please fill in all fields!");
+        return;
+      }
+
+      // Show loading state
+      var btn = document.getElementById("registerBtn");
+      btn.textContent = "Registering...";
+      btn.disabled = true;
+
+      // Call register() from auth.js — it saves to Firestore
+      var result = await register(name, email, password, role);
+
+      if (result == "ok") {
+        document.getElementById("successMsg").classList.remove("hidden");
+        document.getElementById("errorMsg").classList.add("hidden");
+        // Go to login after 2 seconds
+        setTimeout(function() { window.location.href = "login.html"; }, 2000);
+      } else {
+        // Email already taken
+        document.getElementById("errorMsg").classList.remove("hidden");
+        document.getElementById("successMsg").classList.add("hidden");
+        btn.textContent = "Register";
+        btn.disabled = false;
+      }
+    };
+
+  </script>
+
+</body>
+</html>

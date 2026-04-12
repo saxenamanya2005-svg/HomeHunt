@@ -1,0 +1,465 @@
+/* =============================================
+   style.css — All page styles
+   We use Bootstrap for layout (rows/columns)
+   This file adds our own colors and design
+   ============================================= */
+
+/* Google Font - cleaner than default browser font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+/* Apply font to everything on the page */
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f5f6fa;
+  margin: 0;
+}
+
+
+/* ---- NAVBAR ---- */
+.navbar {
+  background-color: #0f172a;  /* dark navy */
+  padding: 12px 0;
+}
+
+.navbar-brand {
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+}
+
+/* The yellow part of "HomeHunt" logo */
+.navbar-brand span {
+  color: #f59e0b;
+}
+
+.nav-link {
+  color: rgba(255,255,255,0.75) !important;
+  font-size: 14px;
+}
+
+.nav-link:hover {
+  color: white !important;
+}
+
+
+/* ---- HERO SECTION (big banner on homepage) ---- */
+.hero {
+  background-color: #0f172a;
+  padding: 80px 0;
+  color: white;
+}
+
+.hero h1 {
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Yellow word in the hero title */
+.hero h1 span {
+  color: #f59e0b;
+}
+
+.hero p {
+  color: rgba(255,255,255,0.65);
+  font-size: 16px;
+  margin-bottom: 30px;
+}
+
+/* The search box inside the hero */
+.hero-search {
+  display: flex;
+  background: white;
+  border-radius: 50px;
+  overflow: hidden;
+  max-width: 520px;
+}
+
+.hero-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.hero-search button {
+  background: #f59e0b;
+  border: none;
+  padding: 0 28px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+}
+
+.hero-search button:hover {
+  background: #d97706;
+}
+
+
+/* ---- PG CARD ---- */
+.pg-card {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  margin-bottom: 24px;
+  transition: transform 0.2s;  /* smooth hover effect */
+}
+
+.pg-card:hover {
+  transform: translateY(-4px);  /* card lifts up slightly on hover */
+}
+
+.pg-card img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;  /* crop image to fit without stretching */
+}
+
+.pg-card-body {
+  padding: 16px;
+}
+
+.pg-card-body h5 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.pg-card-city {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.pg-card-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: #d97706;
+}
+
+.pg-card-price span {
+  font-size: 13px;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.pg-card-type {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 50px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.type-boys  { background: #dbeafe; color: #1e40af; }
+.type-girls { background: #fce7f3; color: #9d174d; }
+.type-coed  { background: #ede9fe; color: #5b21b6; }
+
+.btn-view {
+  display: inline-block;
+  background: #f59e0b;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 18px;
+  border-radius: 50px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+}
+
+.btn-view:hover {
+  background: #d97706;
+  color: #0f172a;
+}
+
+
+/* ---- FILTER BAR (on search page) ---- */
+.filter-bar {
+  background: #0f172a;
+  padding: 16px 0;
+}
+
+.filter-bar input,
+.filter-bar select {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+  outline: none;
+  width: 100%;
+}
+
+.filter-bar select {
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+
+.filter-bar select option {
+  color: black;
+  background: white;
+}
+
+
+/* ---- AUTH PAGES (login & register) ---- */
+.auth-page {
+  min-height: 100vh;
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-box {
+  background: white;
+  border-radius: 16px;
+  padding: 36px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-box h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.auth-box p {
+  color: #94a3b8;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+/* Input field row (icon + input together) */
+.input-row {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.input-row:focus-within {
+  border-color: #f59e0b;  /* highlight border when typing */
+}
+
+.input-row i {
+  padding: 0 12px;
+  color: #94a3b8;
+}
+
+.input-row input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 11px 10px 11px 0;
+  font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Role cards: Tenant / Owner selector */
+.role-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.role-card {
+  flex: 1;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 10px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.role-card.selected {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.role-card i {
+  font-size: 22px;
+  color: #f59e0b;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.role-card b {
+  font-size: 13px;
+  display: block;
+}
+
+.role-card small {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* Big submit button */
+.btn-submit {
+  width: 100%;
+  padding: 13px;
+  background: #f59e0b;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+}
+
+.btn-submit:hover {
+  background: #d97706;
+}
+
+/* Alert box (error or success message) */
+.alert-box {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.alert-error   { background: #fee2e2; color: #991b1b; }
+.alert-success { background: #d1fae5; color: #065f46; }
+.hidden { display: none; }
+
+
+/* ---- DETAILS PAGE ---- */
+.details-img {
+  width: 100%;
+  height: 340px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 24px;
+}
+
+/* The sticky card on the right of details page */
+.contact-card {
+  background: white;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  position: sticky;
+  top: 80px;
+}
+
+.price-big {
+  font-size: 32px;
+  font-weight: 700;
+  color: #d97706;
+}
+
+.contact-btn {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 10px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.btn-call      { background: #f59e0b; color: #0f172a; }
+.btn-whatsapp  { background: #25d366; color: white; }
+.btn-call:hover     { background: #d97706; color: #0f172a; }
+.btn-whatsapp:hover { background: #1ebe5d; }
+
+/* Lock box shown when user is NOT logged in */
+.lock-box {
+  background: #fffbeb;
+  border: 2px solid #fde68a;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.lock-box p {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 14px;
+}
+
+
+/* ---- OWNER DASHBOARD ---- */
+.stat-box {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.stat-box .num {
+  font-size: 28px;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.stat-box .label {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* One listing row in the owner dashboard */
+.listing-item {
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.listing-item h6 {
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.listing-item p {
+  color: #94a3b8;
+  font-size: 13px;
+  margin: 0;
+}
+
+
+/* ---- SEARCH PAGE LOGIN BANNER ---- */
+.login-banner {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+
+/* ---- FOOTER ---- */
+footer {
+  background: #0f172a;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  padding: 24px;
+  font-size: 14px;
+  margin-top: 40px;
+}

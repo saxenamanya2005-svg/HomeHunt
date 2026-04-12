@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HomeHunt - Find Your PG</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="index.html"><span>Home</span>Hunt</a>
+    <div id="navLinks" class="d-flex align-items-center gap-2"></div>
+  </div>
+</nav>
+
+<!-- HERO SECTION -->
+<section class="hero">
+  <div class="container">
+    <h1>Find Your <span>Perfect PG</span><br>Without the Hassle</h1>
+    <p>Search verified PGs by city. Compare prices. Contact owners directly.</p>
+    <div class="hero-search">
+      <input type="text" id="cityInput" placeholder="Enter city (e.g. Dehradun, Delhi)">
+      <button onclick="goToSearch()">
+        <i class="bi bi-search"></i> Search
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED PGS -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 style="font-weight:700; margin:0">Featured PGs</h4>
+      <a href="search.html" class="btn-view">View All</a>
+    </div>
+    <div class="row" id="featuredCards">
+      <p style="color:#94a3b8; font-size:14px">Loading featured PGs...</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="py-5" style="background:white">
+  <div class="container text-center">
+    <h4 style="font-weight:700; margin-bottom:32px">How HomeHunt Works</h4>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div style="font-size:36px; margin-bottom:12px">🔍</div>
+        <h6 style="font-weight:700">1. Search</h6>
+        <p style="color:#94a3b8; font-size:14px">Enter your city and browse available PGs in your area.</p>
+      </div>
+      <div class="col-md-4">
+        <div style="font-size:36px; margin-bottom:12px">📋</div>
+        <h6 style="font-weight:700">2. Compare</h6>
+        <p style="color:#94a3b8; font-size:14px">Filter by price and type. See rent, facilities, and location.</p>
+      </div>
+      <div class="col-md-4">
+        <div style="font-size:36px; margin-bottom:12px">📞</div>
+        <h6 style="font-weight:700">3. Contact</h6>
+        <p style="color:#94a3b8; font-size:14px">Login to reveal the owner's number and contact them directly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>&copy; 2026 HomeHunt</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+
+  import { getUser, logout } from "./auth.js";
+  import { db, collection, getDocs } from "./firebase.js";
+
+  // --- NAVBAR ---
+  var user = getUser();
+  if (user) {
+    var goTo = (user.role == "owner") ? "owner.html" : "search.html";
+    document.getElementById("navLinks").innerHTML =
+      '<a href="' + goTo + '" class="nav-link">' + user.name + '</a>' +
+      '<button class="btn-view" id="logoutBtn">Logout</button>';
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+  } else {
+    document.getElementById("navLinks").innerHTML =
+      '<a href="login.html" class="nav-link">Login</a>' +
+      '<a href="register.html" class="btn-view">Register Free</a>';
+  }
+
+  // --- FEATURED CARDS: load first 3 PGs from Firestore ---
+  async function loadFeatured() {
+    var container = document.getElementById("featuredCards");
+    try {
+      var snapshot = await getDocs(collection(db, "listings"));
+      var allPGs = [];
+      snapshot.forEach(function(d) { allPGs.push({ id: d.id, ...d.data() }); });
+
+      var featured = allPGs.slice(0, 3);
+      if (featured.length == 0) {
+        container.innerHTML = '<p style="color:#94a3b8">No PGs listed yet.</p>';
+        return;
+      }
+
+      container.innerHTML = "";
+      for (var i = 0; i < featured.length; i++) {
+        var pg = featured[i];
+        var typeClass = "type-coed";
+        if (pg.type == "Boys")  typeClass = "type-boys";
+        if (pg.type == "Girls") typeClass = "type-girls";
+        var imgSeed = pg.id.charCodeAt(0) + pg.id.charCodeAt(1);
+
+        container.innerHTML +=
+          '<div class="col-md-4">' +
+            '<div class="pg-card">' +
+              '<img src="https://picsum.photos/seed/' + imgSeed + '/400/200" alt="' + pg.name + '">' +
+              '<div class="pg-card-body">' +
+                '<span class="pg-card-type ' + typeClass + '">' + pg.type + '</span>' +
+                '<h5>' + pg.name + '</h5>' +
+                '<p class="pg-card-city"><i class="bi bi-geo-alt-fill" style="color:#f59e0b"></i> ' + pg.city + '</p>' +
+                '<div class="d-flex justify-content-between align-items-center">' +
+                  '<div class="pg-card-price">₹' + Number(pg.rent).toLocaleString() + ' <span>/month</span></div>' +
+                  '<a href="details.html?id=' + pg.id + '" class="btn-view">View</a>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      }
+    } catch (err) {
+      container.innerHTML = '<p style="color:#ef4444">Could not load PGs. Check your internet connection.</p>';
+      console.error(err);
+    }
+  }
+
+  loadFeatured();
+
+  // --- SEARCH ---
+  window.goToSearch = function() {
+    var city = document.getElementById("cityInput").value;
+    window.location.href = "search.html?city=" + city;
+  };
+  document.getElementById("cityInput").addEventListener("keydown", function(e) {
+    if (e.key == "Enter") window.goToSearch();
+  });
+
+</script>
+</body>
+</html>

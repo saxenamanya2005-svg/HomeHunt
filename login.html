@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HomeHunt - Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+
+  <div class="auth-box">
+
+    <div style="text-align:center; margin-bottom:24px">
+      <div style="font-size:36px">🏠</div>
+      <h2>Welcome Back</h2>
+      <p>Login to your HomeHunt account</p>
+    </div>
+
+    <!-- Error message (hidden at first) -->
+    <div class="alert-box alert-error hidden" id="errorMsg">
+      ❌ Wrong email, password, or role. Try again.
+    </div>
+
+    <!-- EMAIL -->
+    <div class="input-row">
+      <i class="bi bi-envelope"></i>
+      <input type="email" id="email" placeholder="your@email.com">
+    </div>
+
+    <!-- PASSWORD -->
+    <div class="input-row">
+      <i class="bi bi-lock"></i>
+      <input type="password" id="password" placeholder="Your password">
+    </div>
+
+    <!-- ROLE selector -->
+    <p style="font-size:13px; font-weight:600; margin-bottom:8px">Login as</p>
+    <div class="role-row">
+      <div class="role-card selected" id="cardTenant" onclick="selectRole('user')">
+        <i class="bi bi-person-fill"></i>
+        <b>Tenant</b>
+        <small>Looking for PG</small>
+      </div>
+      <div class="role-card" id="cardOwner" onclick="selectRole('owner')">
+        <i class="bi bi-building"></i>
+        <b>Owner</b>
+        <small>Manage listings</small>
+      </div>
+    </div>
+
+    <input type="hidden" id="selectedRole" value="user">
+
+    <!-- Login button — shows spinner when loading -->
+    <button class="btn-submit" id="loginBtn" onclick="submitLogin()">
+      Login
+    </button>
+
+    <p style="text-align:center; margin-top:16px; font-size:13px; color:#94a3b8">
+      No account? <a href="register.html" style="color:#d97706; font-weight:600">Register free</a>
+    </p>
+    <p style="text-align:center; font-size:13px">
+      <a href="index.html" style="color:#94a3b8">← Back to Home</a>
+    </p>
+
+  </div>
+
+  <script type="module">
+    import { login } from "./auth.js";
+
+    // Make selectRole available to onclick
+    window.selectRole = function(role) {
+      document.getElementById("cardTenant").classList.remove("selected");
+      document.getElementById("cardOwner").classList.remove("selected");
+      if (role == "user") {
+        document.getElementById("cardTenant").classList.add("selected");
+      } else {
+        document.getElementById("cardOwner").classList.add("selected");
+      }
+      document.getElementById("selectedRole").value = role;
+    };
+
+    window.submitLogin = async function() {
+      var email    = document.getElementById("email").value.trim();
+      var password = document.getElementById("password").value;
+      var role     = document.getElementById("selectedRole").value;
+
+      if (!email || !password) {
+        alert("Please fill in all fields!");
+        return;
+      }
+
+      // Show loading state
+      var btn = document.getElementById("loginBtn");
+      btn.textContent = "Logging in...";
+      btn.disabled = true;
+
+      // Call login() from auth.js — it checks Firestore
+      var result = await login(email, password, role);
+
+      if (result) {
+        // Go to the right page based on role
+        if (role == "owner") {
+          window.location.href = "owner.html";
+        } else {
+          window.location.href = "search.html";
+        }
+      } else {
+        // Show error
+        document.getElementById("errorMsg").classList.remove("hidden");
+        btn.textContent = "Login";
+        btn.disabled = false;
+      }
+    };
+
+  </script>
+
+</body>
+</html>

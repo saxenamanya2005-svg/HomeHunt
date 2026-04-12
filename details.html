@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HomeHunt - PG Details</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="index.html"><span>Home</span>Hunt</a>
+    <div class="d-flex align-items-center gap-2">
+      <a href="search.html" class="nav-link">← Back to Search</a>
+      <div id="navLinks" class="d-flex align-items-center gap-2"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE CONTENT — filled by JavaScript -->
+<div class="container py-5" id="pageContent">
+  <p style="text-align:center; color:#94a3b8">Loading...</p>
+</div>
+
+<footer>&copy; 2026 HomeHunt</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module">
+
+  import { getUser, logout } from "./auth.js";
+  import { db, doc, getDocs, collection } from "./firebase.js";
+  import { getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // --- NAVBAR ---
+  var user = getUser();
+  if (user) {
+    var goTo = user.role == "owner" ? "owner.html" : "search.html";
+    document.getElementById("navLinks").innerHTML =
+      '<a href="' + goTo + '" class="nav-link">' + user.name + '</a>' +
+      '<button class="btn-view" id="logoutBtn">Logout</button>';
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+  } else {
+    document.getElementById("navLinks").innerHTML =
+      '<a href="login.html" class="nav-link">Login</a>' +
+      '<a href="register.html" class="btn-view">Register Free</a>';
+  }
+
+  // --- LOAD PG DETAILS ---
+  // Get the ?id= from the URL
+  var params = new URLSearchParams(window.location.search);
+  var pgId   = params.get("id");
+
+  async function loadDetails() {
+    var pageContent = document.getElementById("pageContent");
+
+    if (!pgId) {
+      pageContent.innerHTML = '<div style="text-align:center; padding:60px 0"><p style="font-size:48px">😕</p><h4>PG not found</h4><a href="search.html" class="btn-view">Back to Search</a></div>';
+      return;
+    }
+
+    try {
+      // Fetch this specific document from the "listings" collection
+      var pgDoc = await getDoc(doc(db, "listings", pgId));
+
+      if (!pgDoc.exists()) {
+        pageContent.innerHTML = '<div style="text-align:center; padding:60px 0"><p style="font-size:48px">😕</p><h4>PG not found</h4><a href="search.html" class="btn-view">Back to Search</a></div>';
+        return;
+      }
+
+      var pg = { id: pgDoc.id, ...pgDoc.data() };
+
+      // Build facility tags
+      var facilityHTML = "";
+      var facilitiesArray = pg.facilities.split(",");
+      for (var j = 0; j < facilitiesArray.length; j++) {
+        facilityHTML +=
+          '<span style="background:#fffbeb; border:1px solid #fde68a; color:#d97706; padding:5px 12px; border-radius:50px; font-size:13px; margin:3px; display:inline-block;">' +
+            '✓ ' + facilitiesArray[j].trim() +
+          '</span>';
+      }
+
+      // Type badge color
+      var typeColor = "#8b5cf6";
+      if (pg.type == "Boys")  typeColor = "#1e40af";
+      if (pg.type == "Girls") typeColor = "#9d174d";
+
+      // Contact section: different for logged in vs not
+      var contactHTML = "";
+      if (user) {
+        contactHTML =
+          '<div style="background:#f8fafc; border-radius:10px; padding:16px; margin-bottom:16px">' +
+            '<p style="font-size:12px; font-weight:600; color:#94a3b8; margin-bottom:10px">OWNER DETAILS</p>' +
+            '<p style="margin-bottom:6px"><i class="bi bi-person-circle" style="color:#f59e0b"></i> <b>' + pg.owner + '</b></p>' +
+            '<p style="margin:0"><i class="bi bi-telephone-fill" style="color:#f59e0b"></i> ' + pg.phone + '</p>' +
+          '</div>' +
+          '<a href="tel:' + pg.phone + '" class="contact-btn btn-call">' +
+            '<i class="bi bi-telephone-fill"></i> Call Owner' +
+          '</a>' +
+          '<a href="https://wa.me/91' + pg.phone + '" target="_blank" class="contact-btn btn-whatsapp">' +
+            '<i class="bi bi-whatsapp"></i> WhatsApp Owner' +
+          '</a>';
+      } else {
+        contactHTML =
+          '<div style="background:#f8fafc; border-radius:10px; padding:16px; margin-bottom:16px">' +
+            '<p style="font-size:12px; font-weight:600; color:#94a3b8; margin-bottom:10px">OWNER DETAILS</p>' +
+            '<p style="margin-bottom:6px"><i class="bi bi-person-circle" style="color:#f59e0b"></i> <b>' + pg.owner + '</b></p>' +
+            '<p style="margin:0"><i class="bi bi-telephone-fill" style="color:#f59e0b"></i> ' +
+              '<span style="filter:blur(5px); user-select:none">98XXXXXX10</span>' +
+              ' <span style="background:#fde68a; color:#92400e; font-size:11px; padding:2px 8px; border-radius:50px">🔒 Login to see</span>' +
+            '</p>' +
+          '</div>' +
+          '<div class="lock-box">' +
+            '<div style="font-size:32px; margin-bottom:8px">🔒</div>' +
+            '<b style="font-size:15px">Login to Contact Owner</b>' +
+            '<p>Create a free account to see the phone number and WhatsApp the owner.</p>' +
+            '<a href="login.html" class="contact-btn btn-call">Login to Unlock</a>' +
+            '<a href="register.html" style="display:block; text-align:center; font-size:13px; color:#d97706; font-weight:600; margin-top:8px">Register free →</a>' +
+          '</div>';
+      }
+
+      var imgSeed = pg.id.charCodeAt(0) + pg.id.charCodeAt(1);
+
+      // Build full page
+      pageContent.innerHTML =
+        '<div class="row g-4">' +
+          '<div class="col-lg-7">' +
+            '<img src="https://picsum.photos/seed/' + imgSeed + '/800/400" class="details-img" alt="' + pg.name + '">' +
+            '<div style="display:flex; align-items:center; gap:12px; margin-bottom:8px">' +
+              '<h2 style="font-weight:700; margin:0">' + pg.name + '</h2>' +
+              '<span style="background:' + typeColor + '20; color:' + typeColor + '; font-size:12px; font-weight:600; padding:4px 12px; border-radius:50px">' + pg.type + '</span>' +
+            '</div>' +
+            '<p style="color:#94a3b8; margin-bottom:20px"><i class="bi bi-geo-alt-fill" style="color:#f59e0b"></i> ' + pg.city + '</p>' +
+            '<h6 style="font-weight:700; margin-bottom:10px">Facilities</h6>' +
+            '<div style="margin-bottom:24px">' + facilityHTML + '</div>' +
+          '</div>' +
+          '<div class="col-lg-5">' +
+            '<div class="contact-card">' +
+              '<p style="font-size:13px; color:#94a3b8; margin-bottom:4px">Monthly Rent</p>' +
+              '<div class="price-big">₹' + Number(pg.rent).toLocaleString() + '</div>' +
+              '<p style="color:#94a3b8; font-size:13px; margin-bottom:20px">per month</p>' +
+              '<hr style="margin-bottom:20px">' +
+              contactHTML +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+    } catch (err) {
+      pageContent.innerHTML = '<p style="color:#ef4444; text-align:center">Could not load PG details. Check your internet connection.</p>';
+      console.error(err);
+    }
+  }
+
+  loadDetails();
+
+</script>
+</body>
+</html>
