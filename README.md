@@ -2,7 +2,6 @@
 
 ## 📌 About the Project
 HomeHunt is a real estate web application that allows users to explore and find properties easily. It provides a simple, clean, and interactive interface for browsing property listings.
-
 This project is built using frontend technologies with Firebase integration for backend services.
 
 ---
